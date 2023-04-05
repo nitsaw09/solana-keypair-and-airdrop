@@ -10,8 +10,19 @@ const {
 // Create a new keypair
 const newPair = new Keypair();
 
+// take cli arguments for user account input
+// node index.js account=${SOLANA_PUBLIC_KEY}
+const args = process.argv
+    .slice(2)
+    .map(arg => arg.split('='))
+    .reduce((args, [value, key]) => {
+        args[value] = key || true;
+        return args;
+    }, {});
+
 // Exact the public and private key from the keypair
 const publicKey = new PublicKey(newPair._keypair.publicKey).toString();
+console.log(publicKey);
 const privateKey = newPair._keypair.secretKey;
 
 // Connect to the Devnet
@@ -29,7 +40,7 @@ const getWalletBalance = async () => {
         // Make a wallet (keypair) from privateKey and get its balance
         const myWallet = await Keypair.fromSecretKey(privateKey);
         const walletBalance = await connection.getBalance(
-            new PublicKey(newPair.publicKey)
+            new PublicKey(args.account)
         );
         console.log(`Wallet balance: ${parseInt(walletBalance) / LAMPORTS_PER_SOL} SOL`);
     } catch (err) {
@@ -46,7 +57,7 @@ const airDropSol = async () => {
         // Request airdrop of 2 SOL to the wallet
         console.log("Airdropping some SOL to my wallet!");
         const fromAirDropSignature = await connection.requestAirdrop(
-            new PublicKey(myWallet.publicKey),
+            new PublicKey(args.account),
             2 * LAMPORTS_PER_SOL
         );
         await connection.confirmTransaction(fromAirDropSignature);
@@ -54,6 +65,7 @@ const airDropSol = async () => {
         console.log(err);
     }
 };
+
 
 // Show the wallet balance before and after airdropping SOL
 const mainFunction = async () => {
